@@ -110,7 +110,4 @@ private:
 #endif
 	
 };
-
-
-
 #endif

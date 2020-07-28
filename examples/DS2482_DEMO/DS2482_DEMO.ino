@@ -1,6 +1,4 @@
   
-//ESP8266
-  #include <ESP8266WiFi.h>
 //Tools
   #include <Wire.h>             //I²C
 

@@ -40,41 +40,31 @@ bool DS18B20_DS2482::validFamily(const uint8_t* deviceAddress){
     }
 }
 
-void DS18B20_DS2482::setOneWire(DS2482* _DS2482){
-
+void DS18B20_DS2482::setOneWire(DS2482* _DS2482)
+{
     _wire = _DS2482;
     devices = 0;
     parasite = false;
     bitResolution = 9;
     waitForConversion = true;
     checkForConversion = true;
-
 }
 
 // initialise the bus
 void DS18B20_DS2482::begin(void){
-
     DeviceAddress deviceAddress;
-
     _wire->wireResetSearch();
     devices = 0; // Reset the number of devices when we enumerate wire devices
 
     while (_wire->wireSearch(deviceAddress)){
-
         if (validAddress(deviceAddress)){
-
             if (!parasite && readPowerSupply(deviceAddress)) parasite = true;
-
 //            ScratchPad scratchPad;
-
 //            readScratchPad(deviceAddress, scratchPad);
-
             bitResolution = max(bitResolution, getResolution(deviceAddress));
-
             devices++;
         }
     }
-
 }
 
 // returns the number of devices found on the bus
@@ -89,10 +79,9 @@ bool DS18B20_DS2482::validAddress(const uint8_t* deviceAddress){
 
 // finds an address at a given index on the bus
 // returns true if the device was found
-bool DS18B20_DS2482::getAddress(uint8_t* deviceAddress, uint8_t index){
-
+bool DS18B20_DS2482::getAddress(uint8_t* deviceAddress, uint8_t index)
+{
     uint8_t depth = 0;
-
     _wire->wireResetSearch();
 
     while (depth <= index && _wire->wireSearch(deviceAddress)) {
@@ -101,7 +90,6 @@ bool DS18B20_DS2482::getAddress(uint8_t* deviceAddress, uint8_t index){
     }
 
     return false;
-
 }
 
 // attempt to determine if the device at the given address is connected to the bus
@@ -355,14 +343,10 @@ bool DS18B20_DS2482::requestTemperaturesByAddress(const uint8_t* deviceAddress){
     //_wire->wireWriteByte(STARTCONVO, parasite);
 	_wire->wireWriteByte(STARTCONVO);
 
-
     // ASYNC mode?
     if (!waitForConversion) return true;
-
     blockTillConversionComplete(bitResolution);
-
     return true;
-
 }
 
 
@@ -407,15 +391,14 @@ bool DS18B20_DS2482::requestTemperaturesByIndex(uint8_t deviceIndex){
 }
 
 // Fetch temperature for device index
-float DS18B20_DS2482::getTempCByIndex(uint8_t deviceIndex){
-
+float DS18B20_DS2482::getTempCByIndex(uint8_t deviceIndex)
+{
     DeviceAddress deviceAddress;
     if (!getAddress(deviceAddress, deviceIndex)){
         return DEVICE_DISCONNECTED_C;
     }
 
     return getTempC((uint8_t*)deviceAddress);
-
 }
 
 // Fetch temperature for device index
@@ -428,7 +411,6 @@ float DS18B20_DS2482::getTempFByIndex(uint8_t deviceIndex){
     }
 
     return getTempF((uint8_t*)deviceAddress);
-
 }
 
 // reads scratchpad and returns fixed-point temperature, scaling factor 2^-7
@@ -481,11 +463,9 @@ int16_t DS18B20_DS2482::calculateTemperature(const uint8_t* deviceAddress, uint8
 // DS18B20_DS2482.h. It is a large negative number outside the
 // operating range of the device
 int16_t DS18B20_DS2482::getTemp(const uint8_t* deviceAddress){
-
     ScratchPad scratchPad;
     if (isConnected(deviceAddress, scratchPad)) return calculateTemperature(deviceAddress, scratchPad);
     return DEVICE_DISCONNECTED_RAW;
-
 }
 
 // returns temperature in degrees C or DEVICE_DISCONNECTED_C if the
@@ -493,7 +473,8 @@ int16_t DS18B20_DS2482::getTemp(const uint8_t* deviceAddress){
 // the numeric value of DEVICE_DISCONNECTED_C is defined in
 // DS18B20_DS2482.h. It is a large negative number outside the
 // operating range of the device
-float DS18B20_DS2482::getTempC(const uint8_t* deviceAddress){
+float DS18B20_DS2482::getTempC(const uint8_t* deviceAddress)
+{
     return rawToCelsius(getTemp(deviceAddress));
 }
 

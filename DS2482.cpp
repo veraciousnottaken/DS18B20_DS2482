@@ -23,10 +23,8 @@
 		
 */
 #include "Arduino.h"  // according http://blog.makezine.com/2011/12/01/arduino-1-0-is-out-heres-what-you-need-to-know/
-
 #include "DS2482.h"
 #include "Wire.h"
-
 
 #define PTR_STATUS 0xf0
 #define PTR_READ 0xe1
@@ -46,10 +44,8 @@ enum {
 DS2482::DS2482(uint8_t addr)
 {
 	mAddress = 0x18 | addr;
-	
 }
 
-//-------helpers
 void DS2482::begin()
 {
 	Wire.beginTransmission(mAddress);
@@ -306,22 +302,22 @@ uint8_t DS2482::wireSearch(uint8_t *newAddr)
 uint8_t DS2482::devicesCount(bool printAddress){
   uint8_t address[8];
   uint8_t count = 0;
-  String SerialNumber = "";
+  //String SerialNumber = "";
 
   wireResetSearch();
   while (wireSearch(address)){
     count++;
-	SerialNumber = "";
-    for (uint8_t i = 0; i < 8; i++){
-      if (address[i] < 0x10) SerialNumber += "0";
-      SerialNumber += String(address[i], HEX);
-      if (i < 7) SerialNumber += "-";
-    }
-    if (printAddress){
-      Serial.print(SerialNumber);
-	 deviceName(address[0]);
-	 Serial.println();
-    }
+	//SerialNumber = "";
+    //for (uint8_t i = 0; i < 8; i++){
+      //if (address[i] < 0x10) SerialNumber += "0";
+      //SerialNumber += String(address[i], HEX);
+      //if (i < 7) SerialNumber += "-";
+    //}
+    // if (printAddress){
+      // Serial.print(SerialNumber);
+	 // deviceName(address[0]);
+	 // Serial.println();
+    // }
   }
   return count;
 }
