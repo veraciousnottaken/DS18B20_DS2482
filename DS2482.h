@@ -31,47 +31,47 @@
 #define ONEWIRE_CRC 1
 #endif
 
+#define DS2482_CONFIG_APU (1 << 0)
+#define DS2482_CONFIG_PPM (1 << 1)
+#define DS2482_CONFIG_SPU (1 << 2)
+#define DS2484_CONFIG_WS (1 << 3)
 
-#define DS2482_CONFIG_APU (1<<0)
-#define DS2482_CONFIG_PPM (1<<1)
-#define DS2482_CONFIG_SPU (1<<2)
-#define DS2484_CONFIG_WS  (1<<3)
-
-#define DS2482_STATUS_BUSY 	(1<<0)
-#define DS2482_STATUS_PPD 	(1<<1)
-#define DS2482_STATUS_SD	(1<<2)
-#define DS2482_STATUS_LL	(1<<3)
-#define DS2482_STATUS_RST	(1<<4)
-#define DS2482_STATUS_SBR	(1<<5)
-#define DS2482_STATUS_TSB	(1<<6)
-#define DS2482_STATUS_DIR	(1<<7)
+#define DS2482_STATUS_BUSY (1 << 0)
+#define DS2482_STATUS_PPD (1 << 1)
+#define DS2482_STATUS_SD (1 << 2)
+#define DS2482_STATUS_LL (1 << 3)
+#define DS2482_STATUS_RST (1 << 4)
+#define DS2482_STATUS_SBR (1 << 5)
+#define DS2482_STATUS_TSB (1 << 6)
+#define DS2482_STATUS_DIR (1 << 7)
 
 class DS2482
 {
 public:
-	//Address is 0-3
-	DS2482(uint8_t address);
-	
-	bool configure(uint8_t config);
-	uint8_t reset();
-	
-	//DS2482-800 only
-	bool selectChannel(uint8_t channel);
-	
-	bool wireReset(); // return true if presence pulse is detected
-	uint8_t wireReadStatus(bool setPtr=false);
-	
-	void wireWriteByte(uint8_t b);
-	uint8_t wireReadByte();
-	
-	void wireWriteBit(uint8_t bit);
-	uint8_t wireReadBit();
+    //Address is 0-3
+    DS2482(uint8_t address);
+
+	void Setup(uint8_t address);
+    bool configure(uint8_t config);
+    uint8_t reset();
+
+    //DS2482-800 only
+    bool selectChannel(uint8_t channel);
+
+    bool wireReset(); // return true if presence pulse is detected
+    uint8_t wireReadStatus(bool setPtr = false);
+
+    void wireWriteByte(uint8_t b);
+    uint8_t wireReadByte();
+
+    void wireWriteBit(uint8_t bit);
+    uint8_t wireReadBit();
     // Issue a 1-Wire rom select command, you do the reset first.
-    void wireSelect( uint8_t rom[8]);
-	// Issue skip rom
-	void wireSkip();
-	
-	uint8_t hasTimeout() { return mTimeout; }
+    void wireSelect(uint8_t rom[8]);
+    // Issue skip rom
+    void wireSkip();
+
+    uint8_t hasTimeout() { return mTimeout; }
 #if ONEWIRE_SEARCH
     // Clear the search state so that if will start from the beginning again.
     void wireResetSearch();
@@ -88,26 +88,25 @@ public:
 #if ONEWIRE_CRC
     // Compute a Dallas Semiconductor 8 bit CRC, these are used in the
     // ROM and scratchpad registers.
-    static uint8_t crc8( uint8_t *addr, uint8_t len);
+    static uint8_t crc8(uint8_t *addr, uint8_t len);
 #endif
 
 private:
-	
-	uint8_t mAddress;
-	uint8_t mTimeout;
-	uint8_t readByte();
-	void setReadPtr(uint8_t readPtr);
-	
-	uint8_t busyWait(bool setReadPtr=false); //blocks until
-	void begin();
-	void end();
-	void deviceName(uint8_t device);
-	
+    uint8_t mAddress;
+    uint8_t mTimeout;
+    uint8_t readByte();
+    void setReadPtr(uint8_t readPtr);
+
+    uint8_t busyWait(bool setReadPtr = false); //blocks until
+    void begin();
+    void end();
+    void deviceName(uint8_t device);
+
 #if ONEWIRE_SEARCH
-	uint8_t searchAddress[8];
-	uint8_t searchLastDisrepancy;
-	uint8_t searchExhausted;
+    uint8_t searchAddress[8];
+    uint8_t searchLastDisrepancy;
+    uint8_t searchExhausted;
 #endif
-	
 };
 #endif
+

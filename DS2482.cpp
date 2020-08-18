@@ -22,28 +22,46 @@
 		* Modified search function (thanks Gary Fariss)
 		
 */
-#include "Arduino.h"  // according http://blog.makezine.com/2011/12/01/arduino-1-0-is-out-heres-what-you-need-to-know/
+#include "Arduino.h" // according http://blog.makezine.com/2011/12/01/arduino-1-0-is-out-heres-what-you-need-to-know/
 #include "DS2482.h"
-#include "Wire.h"
+#include <Wire.h>
 
 #define PTR_STATUS 0xf0
 #define PTR_READ 0xe1
 #define PTR_CONFIG 0xc3
+#define SCL_PIN 2
+#define SDA_PIN 3
 
-enum {
-	DS18S20 	= (byte)0x10
-,	DS18B20 	= (byte)0x28
-,	DS1822	= (byte)0x22
-,	DS1825	= (byte)0x3B
+//SoftWire Wire = SoftWire(SDA, SCL);
+
+#define WIRE_BUFF	8
+uint8_t WireRxBuff[WIRE_BUFF];
+uint8_t WireTxBuff[WIRE_BUFF];
+
+enum
+{
+	DS18S20 = (byte)0x10,
+	DS18B20 = (byte)0x28,
+	DS1822 = (byte)0x22,
+	DS1825 = (byte)0x3B
 } TemperatureSensors;
 
-enum {
-	DS2406 	= (byte)0x12
+enum
+{
+	DS2406 = (byte)0x12
 } SwitchSensors;
 
 DS2482::DS2482(uint8_t addr)
 {
 	mAddress = 0x18 | addr;
+}
+
+void DS2482::Setup(uint8_t address)
+{
+    //Wire.setRxBuffer(WireRxBuff, WIRE_BUFF);
+    //Wire.setTxBuffer(WireTxBuff, WIRE_BUFF);
+	
+	Wire.begin(address);
 }
 
 void DS2482::begin()
@@ -59,22 +77,22 @@ void DS2482::end()
 void DS2482::setReadPtr(uint8_t readPtr)
 {
 	begin();
-	Wire.write(0xe1);  // changed from 'send' to 'write' according http://blog.makezine.com/2011/12/01/arduino-1-0-is-out-heres-what-you-need-to-know/'
-	Wire.write(readPtr);     
+	Wire.write(0xe1); // changed from 'send' to 'write' according http://blog.makezine.com/2011/12/01/arduino-1-0-is-out-heres-what-you-need-to-know/'
+	Wire.write(readPtr);
 	end();
 }
 
 uint8_t DS2482::readByte()
 {
-	Wire.requestFrom(mAddress,(uint8_t)1);
-	return Wire.read();  
+	Wire.requestFrom(mAddress, (uint8_t)1);
+	return Wire.read();
 }
 
 uint8_t DS2482::wireReadStatus(bool setPtr)
 {
 	if (setPtr)
 		setReadPtr(PTR_STATUS);
-	
+
 	return readByte();
 }
 
@@ -82,7 +100,7 @@ uint8_t DS2482::busyWait(bool setReadPtr)
 {
 	uint8_t status;
 	int loopCount = 1000;
-	while((status = wireReadStatus(setReadPtr)) & DS2482_STATUS_BUSY)
+	while ((status = wireReadStatus(setReadPtr)) & DS2482_STATUS_BUSY)
 	{
 		if (--loopCount <= 0)
 		{
@@ -104,86 +122,83 @@ bool DS2482::configure(uint8_t config)
 {
 	busyWait(true);
 	begin();
-	Wire.write(0xd2);    
-	Wire.write(config | (~config)<<4);   
+	Wire.write(0xd2);
+	Wire.write(config | (~config) << 4);
 
 	return readByte() == config;
 }
 
 bool DS2482::selectChannel(uint8_t channel)
-{	
+{
 	uint8_t ch, ch_read;
 
 	switch (channel)
 	{
-		case 0:
-		default:  
-			ch = 0xf0; 
-			ch_read = 0xb8; 
-			break;
-		case 1: 
-			ch = 0xe1; 
-			ch_read = 0xb1; 
-			break;
-		case 2: 
-			ch = 0xd2; 
-			ch_read = 0xaa; 
-			break;
-		case 3: 
-			ch = 0xc3; 
-			ch_read = 0xa3; 
-			break;
-		case 4: 
-			ch = 0xb4; 
-			ch_read = 0x9c; 
-			break;
-		case 5: 
-			ch = 0xa5; 
-			ch_read = 0x95; 
-			break;
-		case 6: 
-			ch = 0x96; 
-			ch_read = 0x8e; 
-			break;
-		case 7: 
-			ch = 0x87; 
-			ch_read = 0x87; 
-			break;
+	case 0:
+	default:
+		ch = 0xf0;
+		ch_read = 0xb8;
+		break;
+	case 1:
+		ch = 0xe1;
+		ch_read = 0xb1;
+		break;
+	case 2:
+		ch = 0xd2;
+		ch_read = 0xaa;
+		break;
+	case 3:
+		ch = 0xc3;
+		ch_read = 0xa3;
+		break;
+	case 4:
+		ch = 0xb4;
+		ch_read = 0x9c;
+		break;
+	case 5:
+		ch = 0xa5;
+		ch_read = 0x95;
+		break;
+	case 6:
+		ch = 0x96;
+		ch_read = 0x8e;
+		break;
+	case 7:
+		ch = 0x87;
+		ch_read = 0x87;
+		break;
 	};
 
 	busyWait(true);
 	begin();
-	Wire.write(0xc3);  
-	Wire.write(ch); 
+	Wire.write(0xc3);
+	Wire.write(ch);
 	end();
 	busyWait();
-	
+
 	uint8_t check = readByte();
-	
+
 	return check == ch_read;
 }
-
-
 
 bool DS2482::wireReset()
 {
 	busyWait(true);
 	begin();
-	Wire.write(0xb4); 
+	Wire.write(0xb4);
 	end();
-	
+
 	uint8_t status = busyWait();
-	
+
 	return status & DS2482_STATUS_PPD ? true : false;
 }
-
 
 void DS2482::wireWriteByte(uint8_t b)
 {
 	busyWait(true);
 	begin();
-	Wire.write(0xa5);  
-	Wire.write(b); 
+	Wire.write(0xa5);
+	Wire.write(b);
 	end();
 }
 
@@ -191,7 +206,7 @@ uint8_t DS2482::wireReadByte()
 {
 	busyWait(true);
 	begin();
-	Wire.write(0x96);  
+	Wire.write(0x96);
 	end();
 	busyWait();
 	setReadPtr(PTR_READ);
@@ -202,7 +217,7 @@ void DS2482::wireWriteBit(uint8_t bit)
 {
 	busyWait(true);
 	begin();
-	Wire.write(0x87); 
+	Wire.write(0x87);
 	Wire.write(bit ? 0x80 : 0);
 	end();
 }
@@ -222,18 +237,17 @@ void DS2482::wireSkip()
 void DS2482::wireSelect(uint8_t rom[8])
 {
 	wireWriteByte(0x55);
-	for (int i=0;i<8;i++)
+	for (int i = 0; i < 8; i++)
 		wireWriteByte(rom[i]);
 }
-
 
 #if ONEWIRE_SEARCH
 void DS2482::wireResetSearch()
 {
 	searchExhausted = 0;
 	searchLastDisrepancy = 0;
-	
-	for(uint8_t i = 0; i<8; i++) 
+
+	for (uint8_t i = 0; i < 8; i++)
 		searchAddress[i] = 0;
 }
 
@@ -241,46 +255,46 @@ uint8_t DS2482::wireSearch(uint8_t *newAddr)
 {
 	uint8_t i;
 	uint8_t direction;
-	uint8_t last_zero=0;
-	
-	if (searchExhausted) 
+	uint8_t last_zero = 0;
+
+	if (searchExhausted)
 		return 0;
-	
-	if (!wireReset()) 
+
+	if (!wireReset())
 		return 0;
 
 	busyWait(true);
 	wireWriteByte(0xf0);
-	
-	for(i=1;i<65;i++) 
+
+	for (i = 1; i < 65; i++)
 	{
-		int romByte = (i-1)>>3;
-		int romBit = 1<<((i-1)&7);
-		
+		int romByte = (i - 1) >> 3;
+		int romBit = 1 << ((i - 1) & 7);
+
 		if (i < searchLastDisrepancy)
 			direction = searchAddress[romByte] & romBit;
 		else
 			direction = i == searchLastDisrepancy;
-		
+
 		busyWait();
 		begin();
-		Wire.write(0x78); 
+		Wire.write(0x78);
 		Wire.write(direction ? 0x80 : 0);
 		end();
 		uint8_t status = busyWait();
-		
+
 		uint8_t id = status & DS2482_STATUS_SBR;
 		uint8_t comp_id = status & DS2482_STATUS_TSB;
 		direction = status & DS2482_STATUS_DIR;
-		
+
 		if (id && comp_id)
 			return 0;
 		else
-		{ 
+		{
 			if (!id && !comp_id && !direction)
 				last_zero = i;
 		}
-		
+
 		if (direction)
 			searchAddress[romByte] |= romBit;
 		else
@@ -289,37 +303,39 @@ uint8_t DS2482::wireSearch(uint8_t *newAddr)
 
 	searchLastDisrepancy = last_zero;
 
-	if (last_zero == 0) 
+	if (last_zero == 0)
 		searchExhausted = 1;
-	
-	for (i=0;i<8;i++) 
+
+	for (i = 0; i < 8; i++)
 		newAddr[i] = searchAddress[i];
-	
-	return 1;  
+
+	return 1;
 }
 #endif
 
-uint8_t DS2482::devicesCount(bool printAddress){
-  uint8_t address[8];
-  uint8_t count = 0;
-  //String SerialNumber = "";
+uint8_t DS2482::devicesCount(bool printAddress)
+{
+	uint8_t address[8];
+	uint8_t count = 0;
+	//String SerialNumber = "";
 
-  wireResetSearch();
-  while (wireSearch(address)){
-    count++;
-	//SerialNumber = "";
-    //for (uint8_t i = 0; i < 8; i++){
-      //if (address[i] < 0x10) SerialNumber += "0";
-      //SerialNumber += String(address[i], HEX);
-      //if (i < 7) SerialNumber += "-";
-    //}
-    // if (printAddress){
-      // Serial.print(SerialNumber);
-	 // deviceName(address[0]);
-	 // Serial.println();
-    // }
-  }
-  return count;
+	wireResetSearch();
+	while (wireSearch(address))
+	{
+		count++;
+		//SerialNumber = "";
+		//for (uint8_t i = 0; i < 8; i++){
+		//if (address[i] < 0x10) SerialNumber += "0";
+		//SerialNumber += String(address[i], HEX);
+		//if (i < 7) SerialNumber += "-";
+		//}
+		// if (printAddress){
+		// Serial.print(SerialNumber);
+		// deviceName(address[0]);
+		// Serial.println();
+		// }
+	}
+	return count;
 }
 
 #if ONEWIRE_CRC
@@ -327,20 +343,20 @@ uint8_t DS2482::devicesCount(bool printAddress){
 // "Understanding and Using Cyclic Redundancy Checks with Maxim iButton Products"
 //
 
-uint8_t DS2482::crc8( uint8_t *addr, uint8_t len)
+uint8_t DS2482::crc8(uint8_t *addr, uint8_t len)
 {
-	uint8_t crc=0;
-	
-	for (uint8_t i=0; i<len;i++) 
+	uint8_t crc = 0;
+
+	for (uint8_t i = 0; i < len; i++)
 	{
 		uint8_t inbyte = addr[i];
-		for (uint8_t j=0;j<8;j++) 
+		for (uint8_t j = 0; j < 8; j++)
 		{
 			uint8_t mix = (crc ^ inbyte) & 0x01;
 			crc >>= 1;
-			if (mix) 
+			if (mix)
 				crc ^= 0x8C;
-			
+
 			inbyte >>= 1;
 		}
 	}
@@ -348,27 +364,29 @@ uint8_t DS2482::crc8( uint8_t *addr, uint8_t len)
 }
 
 // tools
-#define getString(type) (String)#type
+#define getString(type) (String) #type
 
-void DS2482::deviceName(uint8_t device) {
+void DS2482::deviceName(uint8_t device)
+{
 	String result = "";
 
-	switch(device) {
-		case 	DS18S20:
-			result = getString(DS18S20);
-			break;
-		case DS18B20:
-			result = getString(DS18B20);
-			break;
-		case DS1822:
-			result = getString(DS1822);
-			break;
-		case DS1825:
-			result = getString(DS1825);
-			break;
-		case DS2406:
-			result = getString(DS2406);
-			break;
+	switch (device)
+	{
+	case DS18S20:
+		result = getString(DS18S20);
+		break;
+	case DS18B20:
+		result = getString(DS18B20);
+		break;
+	case DS1822:
+		result = getString(DS1822);
+		break;
+	case DS1825:
+		result = getString(DS1825);
+		break;
+	case DS2406:
+		result = getString(DS2406);
+		break;
 	}
 
 	if (result != "")
